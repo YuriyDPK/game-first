@@ -1,69 +1,47 @@
-import Image from "next/image";
-
-export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+'use client';
+import {useEffect,useState} from 'react';
+import dynamic from 'next/dynamic';
+import {Swords,Shield,ArrowRight,ChevronRight,Check,Users,Volume2,VolumeX,Settings2,ChevronDown,Globe2,Target,Sparkles,X,CheckCheck,LoaderCircle,ArrowUpRight,MousePointer2,Keyboard,Flame,Mountain,Wind,Crown,ScrollText} from 'lucide-react';
+import {HEROES,SKINS,getHero,type HeroId,type Session} from '@/lib/heroes';
+import {DEFAULT_APPEARANCE,validAppearance,type Appearance,type CosmeticItem,type CosmeticSlot} from '@/lib/cosmetics';
+import Wardrobe from '@/components/wardrobe';
+const Arena=dynamic(()=>import('@/components/arena'),{ssr:false});
+const HeroViewer=dynamic(()=>import('@/components/hero-viewer'),{ssr:false,loading:()=> <div className="hero-viewer viewer-loading"><LoaderCircle className="spin"/></div>});
+type Modal='heroes'|'skins'|'how'|'room'|'settings'|'about'|null;
+type HeroProgress={level:number;appearance:Appearance;owned:string[]};
+type Profile={coins:number;heroes:Record<HeroId,HeroProgress>};
+const newProfile=():Profile=>({coins:50,heroes:Object.fromEntries(HEROES.map(h=>[h.id,{level:1,appearance:{...DEFAULT_APPEARANCE},owned:[]}])) as unknown as Record<HeroId,HeroProgress>});
+const HeroIcon=({id,size=18}:{id:HeroId;size?:number})=>id==='ilya'?<Shield size={size}/>:id==='dobrynya'?<Swords size={size}/>:<Target size={size}/>;
+export default function Home(){
+ const [selected,setSelected]=useState<HeroId>('ilya'),[skin,setSkin]=useState('classic'),[mode,setMode]=useState<'friends'|'practice'>('friends'),[modal,setModal]=useState<Modal>(null),[sound,setSound]=useState(true),[name,setName]=useState('Витязь'),[session,setSession]=useState<Session|null>(null),[code,setCode]=useState(''),[joining,setJoining]=useState(false),[loading,setLoading]=useState(false),[error,setError]=useState(''),[toast,setToast]=useState('');
+ const [profile,setProfile]=useState<Profile>(newProfile),[profileReady,setProfileReady]=useState(false);
+ const hero=getHero(selected),progress=profile.heroes[selected];
+ useEffect(()=>{try{const saved=JSON.parse(localStorage.getItem('bogatyri-profile')||'null');if(saved&&typeof saved==='object'){const next=newProfile();next.coins=Math.max(0,Math.floor(Number(saved.coins)||0));for(const h of HEROES){const old=saved.heroes?.[h.id];if(old){next.heroes[h.id]={level:Math.max(1,Math.min(100,Math.floor(Number(old.level)||1))),appearance:validAppearance(h.id,old.appearance),owned:Array.isArray(old.owned)?old.owned.filter((v:unknown)=>typeof v==='string'):[]};}}setProfile(next);}}catch{}setProfileReady(true);try{const prefs=JSON.parse(localStorage.getItem('bogatyri-preferences')||'{}');if(HEROES.some(h=>h.id===prefs.hero))setSelected(prefs.hero);if(SKINS.some(s=>s.id===prefs.skin))setSkin(prefs.skin);if(typeof prefs.name==='string')setName(prefs.name);if(typeof prefs.sound==='boolean')setSound(prefs.sound);}catch{}const c=new URLSearchParams(window.location.search).get('room');if(c){setCode(c.toUpperCase());setJoining(true);setModal('room');}const close=(e:KeyboardEvent)=>{if(e.code==='Escape')setModal(null);};window.addEventListener('keydown',close);return()=>window.removeEventListener('keydown',close);},[]);
+ useEffect(()=>{const t=setTimeout(()=>{try{localStorage.setItem('bogatyri-preferences',JSON.stringify({hero:selected,skin,name,sound}));}catch{}},200);return()=>clearTimeout(t);},[selected,skin,name,sound]);
+ useEffect(()=>{if(profileReady)try{localStorage.setItem('bogatyri-profile',JSON.stringify(profile));}catch{}},[profile,profileReady]);
+ useEffect(()=>{if(!toast)return;const t=setTimeout(()=>setToast(''),3500);return()=>clearTimeout(t);},[toast]);
+ async function enter(practice:boolean,join=false){if(loading)return;setError('');setLoading(true);try{const res=await fetch('/api/arena',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:join?'join':'create',name:name.trim()||'Витязь',hero:selected,skin,practice,code,appearance:progress.appearance,styleLevel:progress.level})});const data=await res.json();if(!res.ok)throw new Error(data.error);setSession(data);setModal(null);}catch(e){setError(e instanceof Error?e.message:'Не удалось войти в бой.');}finally{setLoading(false);}}
+ const open=(m:Modal)=>{setError('');setModal(m);};
+ const setAppearance=(slot:CosmeticSlot,id:string)=>setProfile(current=>({...current,heroes:{...current.heroes,[selected]:{...current.heroes[selected],appearance:{...current.heroes[selected].appearance,[slot]:id}}}}));
+ const buyOrEquip=(item:CosmeticItem)=>setProfile(current=>{const own=current.heroes[selected],has=own.owned.includes(item.id);if(!has&&(own.level<item.level||current.coins<item.price))return current;return {...current,coins:current.coins-(has?0:item.price),heroes:{...current.heroes,[selected]:{...own,owned:has?own.owned:[...own.owned,item.id],appearance:{...own.appearance,[item.slot]:item.id}}}};});
+ const recordProgress=(level:number,earned:number)=>setProfile(current=>{const own=current.heroes[selected];if(!earned&&level<=own.level)return current;return {...current,coins:current.coins+earned,heroes:{...current.heroes,[selected]:{...own,level:Math.max(own.level,level)}}};});
+ if(session)return <Arena session={session} heroId={selected} onExit={()=>{setSession(null);}} onProgress={recordProgress} sound={sound} onSoundChange={()=>setSound(s=>!s)}/>;
+ return <div className="game-shell">
+  <header className="lobby-header"><a className="lobby-brand" href="/" aria-label="Богатыри — главная"><span className="lobby-brand-icon"><Swords size={20}/></span><span>БОГАТЫРИ<small>ЗЕМЛЯ РУССКАЯ</small></span></a><span className="lobby-header-label">ИГРОВОЕ ЛОББИ</span><div><button onClick={()=>open('how')}>Как играть</button><button aria-label={sound?'Выключить звук':'Включить звук'} onClick={()=>setSound(!sound)}>{sound?<Volume2 size={20}/>:<VolumeX size={20}/>}</button><button aria-label="Настройки" onClick={()=>open('settings')}><Settings2 size={20}/></button></div></header>
+  <main className="lobby-main"><div className="lobby-background"/><div className="lobby-grid">
+   <section className="lobby-heroes"><span className="lobby-kicker">ТВОЯ ДРУЖИНА</span><h1>Выбери<br/><em>богатыря</em></h1><p>У каждого героя своё оружие и особая сила.</p><div className="lobby-hero-list">{HEROES.map(h=><button key={h.id} onClick={()=>setSelected(h.id)} aria-pressed={selected===h.id} className={selected===h.id?'selected':''}><span className={`lobby-portrait portrait-${h.id}`}/><span><strong>{h.first} {h.last}</strong><small>{h.weapon}</small></span>{selected===h.id?<Check size={18}/>:<ChevronRight size={18}/>}</button>)}</div><button className="lobby-secondary" onClick={()=>open('heroes')}>Подробнее о героях <ArrowRight size={16}/></button></section>
+   <section className="lobby-stage" aria-label="Выбранный богатырь"><div className="lobby-stage-glow"/><div className="lobby-viewer"><HeroViewer hero={selected} skin={skin} appearance={progress.appearance} styleLevel={progress.level}/></div><div className="lobby-character-info"><span>{hero.role}</span><h2>{hero.first} {hero.last}</h2><p>{hero.weapon} <i/> Ранг облика {progress.level} <i/> {SKINS.find(s=>s.id===skin)?.name}</p><button onClick={()=>open('skins')}><Sparkles size={17}/> Снаряжение и магазин</button></div><span className="lobby-stage-hint"><MousePointer2 size={14}/> Поверни героя мышью</span></section>
+   <aside className="lobby-play"><span className="lobby-kicker">ГОТОВ К ПОДВИГУ? · {profile.coins} МОНЕТ</span><h2>В бой</h2><p>Исследуй Русь, собирай ресурсы и сражайся с друзьями.</p><label className="lobby-name-label" htmlFor="lobby-name">ТВОЁ ИМЯ</label><input id="lobby-name" value={name} onChange={e=>setName(e.target.value)} maxLength={20} placeholder="Витязь" autoComplete="nickname"/><button className="gold-button lobby-start" disabled={loading} onClick={()=>void enter(false)}>{loading?<LoaderCircle className="spin" size={20}/>:<Swords size={20}/>} Создать комнату <ArrowRight size={18}/></button><button className="lobby-join" onClick={()=>{setJoining(true);open('room');}}><Users size={19}/><span><strong>Присоединиться</strong><small>Ввести код комнаты</small></span><ChevronRight size={18}/></button><button className="lobby-join" disabled={loading} onClick={()=>void enter(true)}><Target size={19}/><span><strong>Тренировка</strong><small>Играть против ботов</small></span><ChevronRight size={18}/></button>{error&&!modal&&<p className="form-error" role="alert">{error}</p>}<div className="lobby-note"><Globe2 size={16}/><span>До 3 игроков в комнате.<br/>Пригласи друзей по ссылке.</span></div></aside>
+  </div></main>
+  {toast&&<div className="toast" role="status"><Check size={16}/>{toast}</div>}
+  {modal&&<div className="modal-backdrop" onClick={()=>setModal(null)}><section className={`modal ${modal==='heroes'||modal==='skins'?'wide-modal':''} ${modal==='how'?'how-modal':''}`} role="dialog" aria-modal="true" aria-labelledby="modal-title" onClick={e=>e.stopPropagation()}><button className="modal-close" onClick={()=>setModal(null)} aria-label="Закрыть"><X size={19}/></button>
+   {modal==='room'&&<><div className="modal-emblem"><Users size={29}/></div><span className="eyebrow">ВМЕСТЕ СИЛЬНЕЕ</span><h2 id="modal-title">{joining?'Вступить в дружину':'Собери свою дружину'}</h2><p>{joining?'Введи код друга — и встретимся на арене.':'Создай комнату и пригласи двух друзей по коду.'}</p><form onSubmit={e=>{e.preventDefault();void enter(false,joining);}}><label className="field-label" htmlFor="player-name">Твоё имя</label><input id="player-name" value={name} onChange={e=>setName(e.target.value)} maxLength={20} placeholder="Как тебя величать?" required autoComplete="nickname"/>{joining&&<><label className="field-label" htmlFor="room-code">Код комнаты</label><input className="code-input" id="room-code" value={code} onChange={e=>setCode(e.target.value.toUpperCase().replace(/[^A-F0-9]/g,''))} placeholder="A1B2C3" maxLength={6} minLength={6} required autoFocus/></>}<div className="chosen-hero"><span className={`profile-avatar portrait-${selected}`}/><div><small>ТВОЙ БОГАТЫРЬ</small><strong>{hero.first} {hero.last}</strong></div><HeroIcon id={selected}/></div>{error&&<p role="alert" className="form-error">{error}</p>}<button className="gold-button" type="submit" disabled={loading}>{loading?<LoaderCircle size={18} className="spin"/>:<Swords size={18}/>} {joining?'Вступить в бой':'Создать комнату'}<ArrowRight size={17}/></button></form><button className="modal-switch" onClick={()=>{setJoining(!joining);setError('');}}>{joining?'Создать свою комнату':'У меня уже есть код комнаты'}</button><span className="room-footnote"><Globe2 size={13}/> Друзьям нужен адрес этого же игрового сервера</span></>}
+   {modal==='skins'&&<Wardrobe hero={selected} skin={skin} appearance={progress.appearance} level={progress.level} coins={profile.coins} owned={progress.owned} onHero={setSelected} onSkin={setSkin} onItem={buyOrEquip} onDefault={slot=>setAppearance(slot,'default')}/>}
+   {modal==='heroes'&&<><span className="eyebrow">ТРИ ХРАНИТЕЛЯ РУСИ</span><h2 id="modal-title">Сила в характере</h2><div className="detail-tabs">{HEROES.map(h=><button key={h.id} className={selected===h.id?'active':''} onClick={()=>setSelected(h.id)}><HeroIcon id={h.id} size={16}/>{h.first} {h.last}</button>)}</div><div className="hero-detail-grid"><div className="viewer-container"><HeroViewer hero={selected} skin={skin} appearance={progress.appearance} styleLevel={progress.level}/><span className="viewer-caption"><MousePointer2 size={13}/> Поверни богатыря мышью</span></div><div className="hero-detail"><span className="eyebrow">{hero.role}</span><h3>{hero.first}<br/>{hero.last}</h3><p>{hero.description}</p><div className="detail-stats">{[['Сила',hero.power],['Ловкость',hero.agility],['Защита',hero.defense]].map(([label,value])=><div key={label}><span>{label}</span><div><i style={{width:`${value}%`}}/></div><b>{value}</b></div>)}</div><div className="ability-info"><ZapIcon/><div><strong>{hero.ability} <kbd>Q</kbd></strong><p>{hero.abilityDescription}</p></div></div><button className="gold-button" onClick={()=>setModal(null)}><Check size={17}/> Выбрать богатыря</button></div></div></>}
+   {modal==='how'&&<><div className="modal-emblem"><ScrollText size={30}/></div><span className="eyebrow">ПЕРЕД ПЕРВЫМ БОЕМ</span><h2 id="modal-title">Ратная грамота</h2><p>Исследуй мир, собирай редкие ресурсы и создавай снаряжение.<br/>После падения богатырь вернётся в лагерь через 3 секунды, сохранив ресурсы.</p><div className="controls-list">{[[<Keyboard size={20} key="i"/>,'W A S D','Движение относительно камеры'],[<MousePointer2 size={20} key="i"/>,'МЫШЬ','Вращение камеры · клик для захвата'],[<Swords size={20} key="i"/>,'ЛКМ / J','Удар или выстрел из лука'],[<Shield size={20} key="i"/>,'ПКМ / C','ПКМ / C — прицел; держи ЛКМ для натяжения' ],[<Wind size={20} key="i"/>,'SPACE','Прыжок · Ctrl — перекат'],[<Flame size={20} key="i"/>,'Q','Особая сила · раз в 8 секунд']].map(([icon,key,description])=><div key={String(key)}>{icon}<kbd>{key}</kbd><span>{description}</span></div>)}</div><div className="how-note"><Users size={20}/><p>Shift — бег, I — инвентарь, 1–3 — смена оружия, 4–5 — предметы, E — подобрать припасы. Для игры с друзьями создай дружину и отправь им код. Все должны открыть игру на одном сервере. Начать можно сразу — друзья присоединятся по ходу боя.</p></div><button className="gold-button" onClick={()=>{setMode('practice');setModal(null);}}><Target size={17}/> Попробовать в тренировке <ArrowRight size={17}/></button></>}
+   {modal==='settings'&&<><div className="modal-emblem"><Settings2 size={28}/></div><span className="eyebrow">ТВОЙ ПУТЬ</span><h2 id="modal-title">Настройки</h2><p>Приготовься к новым подвигам.</p><label className="field-label" htmlFor="settings-name">Имя богатыря</label><input id="settings-name" value={name} onChange={e=>setName(e.target.value)} maxLength={20} placeholder="Витязь"/><button className="settings-row" onClick={()=>setSound(!sound)}><span><Volume2 size={19}/> Звуки сражения</span><span className={`toggle ${sound?'on':''}`}><i/></span></button><div className="settings-info"><CheckCheck size={17}/><span>Настройки и выбранный облик сохраняются в этом браузере.</span></div><button className="gold-button" onClick={()=>{if(!name.trim())setName('Витязь');setModal(null);setToast('Настройки сохранены');}}><Check size={17}/> Сохранить</button></>}
+   {modal==='about'&&<><div className="modal-emblem"><Crown size={30}/></div><span className="eyebrow">БЫЛИНЫ ОЖИВАЮТ</span><h2 id="modal-title">Богатыри.<br/>Земля русская.</h2><p className="about-copy">Три легендарных защитника Руси встречаются на ратном поле. Выбери тяжёлую булаву Ильи, искусный меч Добрыни или меткий лук Алёши.</p><p className="about-copy">Авторские облики, объёмная арена и живые поединки с друзьями. Тренируйся с ботами, учись держать щит и найди свой стиль боя.</p><div className="about-badges"><span><Swords size={17}/> 3 стиля боя</span><span><Sparkles size={17}/> 9 обликов</span><span><Users size={17}/> До 3 игроков</span></div><button className="gold-button" onClick={()=>setModal(null)}>Начать свою легенду <ArrowRight size={17}/></button></>}
+  </section></div>}
+ </div>;
 }
+function ZapIcon(){return <span className="ability-symbol"><Flame size={22}/></span>;}

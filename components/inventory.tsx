@@ -1,0 +1,22 @@
+'use client';
+import { useState } from 'react';
+import { ArrowLeft, Backpack, BowArrow, Check, Crosshair, Footprints, Hammer, Heart, Shield, Swords, Wheat, X } from 'lucide-react';
+import { WEAPONS, RESOURCE_NAMES, maxHealth, xpForLevel, type CraftGrid, type PlayerState, type ResourceId, type SkillId, type WeaponId } from '@/lib/heroes';
+import Crafting, { ResourceArt } from './crafting';
+
+const WeaponIcon=({id}:{id:WeaponId})=>id==='mace'?<Hammer/>:id==='sword'?<Swords/>:<BowArrow/>;
+type Props={me:PlayerState;craftPending:boolean;skillPending:boolean;onClose:()=>void;onCraft:(grid:CraftGrid)=>void;onSkill:(skill:SkillId)=>void;onWeapon:(id:WeaponId)=>void;onUse:(id:'potion'|'bread')=>void};
+export default function Inventory({me,craftPending,skillPending,onClose,onCraft,onSkill,onWeapon,onUse}:Props){
+ const [tab,setTab]=useState<'bag'|'craft'|'skills'>('bag');
+ return <div className="inventory-backdrop" onClick={onClose}><section className="inventory-panel simple-inventory" role="dialog" aria-modal="true" aria-labelledby="inventory-title" onClick={e=>e.stopPropagation()}>
+  <button className="modal-close" onClick={onClose} aria-label="Закрыть инвентарь"><X size={20}/></button>
+  <span className="eyebrow">СНАРЯЖЕНИЕ БОГАТЫРЯ</span><h2 id="inventory-title">Сума дружинника</h2>
+  <div className="inventory-tabs" role="tablist" aria-label="Разделы сумы">{([['bag','Сума'],['craft','Крафт'],['skills','Развитие']] as const).map(([id,name])=><button key={id} role="tab" aria-selected={tab===id} onClick={()=>setTab(id)}>{name}{id==='skills'&&me.skillPoints>0&&<b>{me.skillPoints}</b>}</button>)}</div>
+  {tab==='bag'&&<div className="bag-content"><div className="inventory-section-title"><Swords size={16}/><h3>Оружие</h3><span>1 · 2 · 3</span></div><div className="bag-weapons">{(['mace','sword','bow'] as WeaponId[]).map((id,i)=><button key={id} onClick={()=>onWeapon(id)} aria-pressed={me.weapon===id} className={me.weapon===id?'equipped':''}><WeaponIcon id={id}/><span><strong>{WEAPONS[id].short}</strong><small>{WEAPONS[id].damage+(me.upgrades[id]?(id==='bow'?10:12):0)+me.skills.strength*3} урона {me.upgrades[id]?'· улучшено':''}</small></span><kbd>{i+1}</kbd>{me.weapon===id&&<Check size={14}/>}</button>)}</div>
+   <div className="inventory-section-title"><Backpack size={16}/><h3>Припасы</h3></div><div className="bag-supplies"><button disabled={!me.inventory.potion||me.hp>=maxHealth(me.hero,me.skills)} onClick={()=>onUse('potion')}><Heart/><span>Настой <b>×{me.inventory.potion}</b><small>+55 здоровья · 4</small></span></button><button disabled={!me.inventory.bread||me.stamina>=98} onClick={()=>onUse('bread')}><Wheat/><span>Хлеб <b>×{me.inventory.bread}</b><small>+60 сил · 5</small></span></button><div><Crosshair/><span>Стрелы <b>×{me.inventory.arrows}</b><small>Боезапас</small></span></div></div>
+   <div className="inventory-section-title"><Hammer size={16}/><h3>Ресурсы</h3><button className="inventory-craft-link" onClick={()=>setTab('craft')}>К крафту →</button></div><div className="bag-resources">{(['iron','wood','crystal','ingot','plank'] as ResourceId[]).map(id=><div key={id} title={RESOURCE_NAMES[id]}><ResourceArt id={id}/><span>{RESOURCE_NAMES[id]}</span><b>×{me.resources[id]}</b></div>)}</div></div>}
+  {tab==='craft'&&<Crafting me={me} pending={craftPending} onCraft={onCraft}/>}
+  {tab==='skills'&&<div className="level-card"><div className="level-heading"><strong>Уровень {me.level}</strong><span>Опыт {me.xp} / {xpForLevel(me.level)} · очки: {me.skillPoints}</span></div><div className="level-progress"><i style={{width:`${me.xp/xpForLevel(me.level)*100}%`}}/></div><p>Собирай ресурсы, создавай предметы и побеждай, чтобы получать опыт и очки улучшений.</p><div className="skill-list">{([['strength','Сила','+3 урона'],['vitality','Здоровье','+15 здоровья'],['agility','Ловкость','+5% скорости']] as const).map(([id,name,effect])=><button key={id} disabled={!me.skillPoints||me.skills[id]>=5||skillPending||me.hp<=0} onClick={()=>onSkill(id)}>{name} {me.skills[id]}/5 <small>{effect} за очко · улучшить +</small></button>)}</div><p className="skill-summary"><Shield size={15}/> Навыки, ресурсы и снаряжение сохраняются после гибели.</p></div>}
+  <footer><span><Heart size={13}/> {me.hp} / {maxHealth(me.hero,me.skills)} <i/><Footprints size={13}/> {Math.round(me.stamina)} / 100</span><button className="text-link" onClick={onClose}>Вернуться в бой <ArrowLeft size={14}/></button></footer>
+ </section></div>;
+}
