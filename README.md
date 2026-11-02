@@ -1,36 +1,24 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# После звонка
 
-## Getting Started
+Браузерный 3D-прототип школьных пряток. Первый этаж построен по предоставленному плану: двор, вход и раздевалки, спортзал, столовая с закрытой кухней, лестницы и две комнаты мастерской. Планировки кабинетов на втором, третьем и четвёртом этажах приблизительные: отдельных чертежей для них нет.
 
-First, run the development server:
+## Запуск
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Откройте адрес, показанный сервером. Выберите «Начать игру» для пряток или «Исследовать школу», чтобы спокойно пройти по этажам и поговорить с персонажами без погони и таймера.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Управление от первого лица: мышь — осмотреться, WASD или стрелки — двигаться, Shift — бег, E — разговор или укрытие, F — открыть или закрыть дверь. Esc освобождает курсор; щелчок по игре снова включает управление взглядом. Если браузер не позволяет захватить курсор, зажмите кнопку мыши и перетаскивайте её по сцене.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+На обеих лестницах пройдите к первому маршу, поднимитесь до промежуточной площадки, перейдите на второй марш и вернитесь к двери следующего этажа. Кухня закрыта. Кнопка «План» показывает схему текущего этажа и положение игрока.
 
-## Learn More
+Для игры с других устройств они должны обращаться к тому же работающему серверу. Создайте комнату и передайте её код друзьям. Сетевая часть остаётся прототипом: сервер хранит комнаты в памяти одного процесса и синхронизирует положения игроков, включая высоту. После перезапуска комнаты исчезают; двери, учительница, разговоры и таймер пока рассчитываются отдельно на каждом устройстве. В режиме пряток учительница пока патрулирует только первый этаж.
 
-To learn more about Next.js, take a look at the following resources:
+Тесты лестницы и комнат запускаются на Node.js 22 или новее:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm test
+```
