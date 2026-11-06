@@ -1,36 +1,21 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Northbound
 
-## Getting Started
+Браузерный 3D-прототип стратегии с комнатами до четырёх участников и ботами.
 
-First, run the development server:
+## Запуск
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Откройте адрес из терминала. Для совместной игры все участники должны обращаться к одному запущенному серверу: создайте лобби и передайте его четырёхзначный код. Создатель может добавить ботов и начать матч.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Как играть
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- WASD — движение героя. Подойдите к дереву: герой срубит его автоматически. После падения дерева подберите брёвна с земли и отнесите их на отмеченную точку сбора.
+- На точке древесина сдаётся автоматически. Ратуша строится за 10 дерева, казарма — за 30; затем автоматически набираются воины по 12 дерева.
+- Воины появляются рядом с героем, следуют за ним и сами атакуют ближайших врагов и вражеские постройки. Они стараются обходить деревья.
+- Победите соперников или уничтожьте их ратуши.
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Состояние комнат хранится в памяти одного процесса Next.js и сбрасывается при перезапуске. Это прототип для одного постоянно работающего сервера, а не масштабируемый сервер с сохранением, авторизацией и защитой от нечестных клиентов. Боты, как и игроки, рубят деревья, подбирают брёвна, относят их на свою точку и тратят древесину на здания и воинов. Их отряды следуют за героями.
